@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, User, Building2, Briefcase, Clock } from "lucide-react";
+import { CheckCircle, X, User, Mail, Building2, Briefcase } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Official {
@@ -11,8 +10,7 @@ interface Official {
   department: string;
   position: string;
   image?: string;
-  requestedAt: string;
-  verified: boolean;
+  status: "pending" | "accepted" | "rejected";
 }
 
 interface VerifyOfficialsProps {
@@ -26,8 +24,7 @@ const mockOfficials: Official[] = [
     email: "sarah.j@company.com",
     department: "Human Resources",
     position: "Director",
-    requestedAt: "2 hours ago",
-    verified: false,
+    status: "pending",
   },
   {
     id: "2",
@@ -35,8 +32,7 @@ const mockOfficials: Official[] = [
     email: "m.chen@company.com",
     department: "Engineering",
     position: "Senior Administrator",
-    requestedAt: "5 hours ago",
-    verified: false,
+    status: "pending",
   },
   {
     id: "3",
@@ -44,8 +40,7 @@ const mockOfficials: Official[] = [
     email: "e.davis@company.com",
     department: "Finance",
     position: "Manager",
-    requestedAt: "1 day ago",
-    verified: false,
+    status: "pending",
   },
   {
     id: "4",
@@ -53,39 +48,29 @@ const mockOfficials: Official[] = [
     email: "r.wilson@company.com",
     department: "Operations",
     position: "Coordinator",
-    requestedAt: "2 days ago",
-    verified: false,
+    status: "pending",
   },
 ];
 
 const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
   const [officials, setOfficials] = useState<Official[]>(mockOfficials);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const toggleSelection = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleAll = () => {
-    if (selectedIds.length === officials.filter((o) => !o.verified).length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(officials.filter((o) => !o.verified).map((o) => o.id));
-    }
-  };
-
-  const handleVerify = () => {
-    onVerify(selectedIds);
+  const handleAccept = (id: string) => {
     setOfficials((prev) =>
-      prev.map((o) => (selectedIds.includes(o.id) ? { ...o, verified: true } : o))
+      prev.map((o) => (o.id === id ? { ...o, status: "accepted" as const } : o))
     );
-    setSelectedIds([]);
+    onVerify([id]);
   };
 
-  const pendingOfficials = officials.filter((o) => !o.verified);
-  const verifiedOfficials = officials.filter((o) => o.verified);
+  const handleReject = (id: string) => {
+    setOfficials((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: "rejected" as const } : o))
+    );
+  };
+
+  const pendingOfficials = officials.filter((o) => o.status === "pending");
+  const acceptedOfficials = officials.filter((o) => o.status === "accepted");
+  const rejectedOfficials = officials.filter((o) => o.status === "rejected");
 
   return (
     <div className="animate-slide-up">
@@ -101,68 +86,58 @@ const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
 
       {pendingOfficials.length > 0 && (
         <div className="space-y-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedIds.length === pendingOfficials.length && pendingOfficials.length > 0}
-                onCheckedChange={toggleAll}
-                id="select-all"
-              />
-              <label htmlFor="select-all" className="text-sm font-medium text-foreground cursor-pointer">
-                Select All ({pendingOfficials.length} pending)
-              </label>
-            </div>
-            {selectedIds.length > 0 && (
-              <Button onClick={handleVerify} variant="success" size="sm">
-                Verify Selected ({selectedIds.length})
-              </Button>
-            )}
-          </div>
-
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Pending Requests ({pendingOfficials.length})
+          </h3>
           <div className="space-y-3">
             {pendingOfficials.map((official) => (
               <div
                 key={official.id}
-                className={`p-4 rounded-xl border transition-all duration-200 ${
-                  selectedIds.includes(official.id)
-                    ? "border-primary bg-accent/50 shadow-card"
-                    : "border-border bg-card hover:border-primary/50 hover:shadow-card"
-                }`}
+                className="p-4 rounded-xl border border-border bg-card hover:shadow-card transition-all duration-200"
               >
-                <div className="flex items-center gap-4">
-                  <Checkbox
-                    checked={selectedIds.includes(official.id)}
-                    onCheckedChange={() => toggleSelection(official.id)}
-                    id={`official-${official.id}`}
-                  />
-                  <Avatar className="w-12 h-12 border-2 border-border">
+                <div className="flex items-start gap-4">
+                  <Avatar className="w-14 h-14 border-2 border-border">
                     <AvatarImage src={official.image} alt={official.name} />
-                    <AvatarFallback className="bg-muted text-muted-foreground">
+                    <AvatarFallback className="bg-muted text-muted-foreground text-lg">
                       {official.name.split(" ").map((n) => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-foreground truncate">{official.name}</h4>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning-foreground border border-warning/20">
-                        Pending
+                    <h4 className="font-medium text-foreground">{official.name}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        {official.email}
                       </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">{official.email}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3 h-3" />
+                      <span className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4" />
                         {official.department}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Briefcase className="w-3 h-3" />
+                      <span className="flex items-center gap-2">
+                        <Briefcase className="w-4 h-4" />
                         {official.position}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {official.requestedAt}
-                      </span>
                     </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleAccept(official.id)}
+                      variant="success"
+                      size="sm"
+                      className="gap-1"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Accept
+                    </Button>
+                    <Button
+                      onClick={() => handleReject(official.id)}
+                      variant="destructive"
+                      size="sm"
+                      className="gap-1"
+                    >
+                      <X className="w-4 h-4" />
+                      Reject
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -171,11 +146,11 @@ const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
         </div>
       )}
 
-      {verifiedOfficials.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Recently Verified</h3>
+      {acceptedOfficials.length > 0 && (
+        <div className="space-y-4 mb-6">
+          <h3 className="text-sm font-medium text-muted-foreground">Accepted</h3>
           <div className="space-y-3">
-            {verifiedOfficials.map((official) => (
+            {acceptedOfficials.map((official) => (
               <div
                 key={official.id}
                 className="p-4 rounded-xl border border-success/20 bg-success/5"
@@ -191,13 +166,10 @@ const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-foreground truncate">{official.name}</h4>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
-                        Verified
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{official.position} • {official.department}</p>
+                    <h4 className="font-medium text-foreground">{official.name}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {official.position} • {official.department}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -206,13 +178,45 @@ const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
         </div>
       )}
 
-      {pendingOfficials.length === 0 && verifiedOfficials.length === 0 && (
+      {rejectedOfficials.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground">Rejected</h3>
+          <div className="space-y-3">
+            {rejectedOfficials.map((official) => (
+              <div
+                key={official.id}
+                className="p-4 rounded-xl border border-destructive/20 bg-destructive/5"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-1 rounded-full bg-destructive/10">
+                    <X className="w-5 h-5 text-destructive" />
+                  </div>
+                  <Avatar className="w-10 h-10 border-2 border-destructive/20">
+                    <AvatarImage src={official.image} alt={official.name} />
+                    <AvatarFallback className="bg-destructive/10 text-destructive">
+                      {official.name.split(" ").map((n) => n[0]).join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-foreground">{official.name}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {official.position} • {official.department}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {pendingOfficials.length === 0 && acceptedOfficials.length === 0 && rejectedOfficials.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
             <User className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium text-foreground mb-2">No Pending Requests</h3>
-          <p className="text-muted-foreground">All officials have been verified</p>
+          <p className="text-muted-foreground">All officials have been reviewed</p>
         </div>
       )}
     </div>
