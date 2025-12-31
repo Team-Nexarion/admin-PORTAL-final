@@ -17,10 +17,15 @@ const Index = () => {
   ];
 
   const handleLogin = (email: string, password: string) => {
-    console.log("Login:", { email, password });
-    toast.success("Login successful!", {
-      description: "Welcome back, Administrator",
-    });
+    if (email === "demo@" && password === "demo1234") {
+      toast.success("Login successful!", {
+        description: "Welcome back, Administrator",
+      });
+    } else {
+      toast.error("Login failed!", {
+        description: "Invalid email or password",
+      });
+    }
   };
 
   const handleRegister = (data: any) => {
