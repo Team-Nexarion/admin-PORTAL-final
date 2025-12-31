@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, User, Mail, Building2, Briefcase, Upload, X } from "lucide-react";
 
 interface AdminData {
@@ -16,26 +15,6 @@ interface AdminData {
 interface RegisterAdminProps {
   onRegister: (data: AdminData) => void;
 }
-
-const departments = [
-  "Human Resources",
-  "Engineering",
-  "Marketing",
-  "Finance",
-  "Operations",
-  "Sales",
-  "Legal",
-  "Customer Support",
-];
-
-const positions = [
-  "Director",
-  "Manager",
-  "Senior Administrator",
-  "Administrator",
-  "Supervisor",
-  "Coordinator",
-];
 
 const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
   const [formData, setFormData] = useState<AdminData>({
@@ -171,49 +150,41 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
           </div>
         </div>
 
-        {/* Department */}
+        {/* Department - Text Input */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-foreground">Department</Label>
+          <Label htmlFor="department" className="text-sm font-medium text-foreground">
+            Department
+          </Label>
           <div className="relative">
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10 pointer-events-none" />
-            <Select
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="department"
+              type="text"
+              placeholder="Enter department"
               value={formData.department}
-              onValueChange={(value) => setFormData({ ...formData, department: value })}
-            >
-              <SelectTrigger className="pl-11 h-12 bg-muted/50 border-border">
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              className="pl-11 h-12 bg-muted/50 border-border focus:border-primary"
+              required
+            />
           </div>
         </div>
 
-        {/* Position */}
+        {/* Position - Text Input */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-foreground">Position</Label>
+          <Label htmlFor="position" className="text-sm font-medium text-foreground">
+            Position
+          </Label>
           <div className="relative">
-            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10 pointer-events-none" />
-            <Select
+            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="position"
+              type="text"
+              placeholder="Enter position"
               value={formData.position}
-              onValueChange={(value) => setFormData({ ...formData, position: value })}
-            >
-              <SelectTrigger className="pl-11 h-12 bg-muted/50 border-border">
-                <SelectValue placeholder="Select position" />
-              </SelectTrigger>
-              <SelectContent>
-                {positions.map((pos) => (
-                  <SelectItem key={pos} value={pos}>
-                    {pos}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+              className="pl-11 h-12 bg-muted/50 border-border focus:border-primary"
+              required
+            />
           </div>
         </div>
 
