@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, User, Mail, Building2, Briefcase, Upload, X } from "lucide-react";
 
+const BASE_URL = "https://glacier-backend-4r0g.onrender.com";
+
 interface AdminData {
   name: string;
   email: string;
@@ -13,11 +15,7 @@ interface AdminData {
   position: string;
 }
 
-interface RegisterAdminProps {
-  onRegister: (data: AdminData) => void;
-}
-
-const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
+const RegisterAdmin = () => {
   const [formData, setFormData] = useState<AdminData>({
     name: "",
     email: "",
@@ -49,9 +47,38 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onRegister(formData);
+
+    try {
+      const fd = new FormData();
+      fd.append("name", formData.name);
+      fd.append("email", formData.email);
+      fd.append("position", formData.position);
+      fd.append("department", formData.department);
+      if (formData.image) {
+        fd.append("photo", formData.image);
+      }
+
+      const res = await fetch(`${BASE_URL}/admin/register`, {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Admin registration failed");
+        return;
+      }
+
+      alert("Admin registered successfully");
+      console.log("Registered admin:", data.data);
+    } catch (error) {
+      console.error("Register admin error:", error);
+      alert("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -124,7 +151,7 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
             <Input
               id="name"
               type="text"
-              placeholder="John Smith"
+        
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="pl-11 h-12 bg-muted/50 border-border focus:border-primary"
@@ -143,7 +170,7 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
             <Input
               id="reg-email"
               type="text"
-              placeholder="john@company.com"
+              
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="pl-11 h-12 bg-muted/50 border-border focus:border-primary"
@@ -152,27 +179,7 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
           </div>
         </div>
 
-        {/* Password */}
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-foreground">
-            Default Password
-          </Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type="text"
-              placeholder="default123"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="h-12 bg-muted/50 border-border focus:border-primary"
-              required
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-              Default: default123
-            </span>
-          </div>
-        </div>
-
+       
         {/* Department - Text Input */}
         <div className="space-y-2">
           <Label htmlFor="department" className="text-sm font-medium text-foreground">
