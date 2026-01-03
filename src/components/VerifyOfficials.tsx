@@ -1,76 +1,126 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, X, User, Mail, Building2, Briefcase } from "lucide-react";
+import { CheckCircle, X, User, Mail, Building2, Briefcase, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
+
+const BASE_URL = "https://glacier-backend-4r0g.onrender.com";
 
 interface Official {
-  id: string;
+  id: number;
   name: string;
   email: string;
   department: string;
   position: string;
-  image?: string;
-  status: "pending" | "accepted" | "rejected";
+  photo?: string;
+  isVerified: boolean;
+  verifiedById?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface VerifyOfficialsProps {
-  onVerify: (officialIds: string[]) => void;
-}
+const VerifyOfficials = () => {
+  const [officials, setOfficials] = useState<Official[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<{ [key: number]: boolean }>({});
 
-const mockOfficials: Official[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    email: "sarah.j@company.com",
-    department: "Human Resources",
-    position: "Director",
-    status: "pending",
-  },
-  {
-    id: "2",
-    name: "Michael Chen",
-    email: "m.chen@company.com",
-    department: "Engineering",
-    position: "Senior Administrator",
-    status: "pending",
-  },
-  {
-    id: "3",
-    name: "Emily Davis",
-    email: "e.davis@company.com",
-    department: "Finance",
-    position: "Manager",
-    status: "pending",
-  },
-  {
-    id: "4",
-    name: "Robert Wilson",
-    email: "r.wilson@company.com",
-    department: "Operations",
-    position: "Coordinator",
-    status: "pending",
-  },
-];
+  // Fetch pending officials on component mount
+  useEffect(() => {
+    fetchOfficials();
+  }, []);
 
-const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
-  const [officials, setOfficials] = useState<Official[]>(mockOfficials);
+  const fetchOfficials = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${BASE_URL}/admin/officials`, {
+        method: 'GET',
+        credentials: 'include', // Include cookies for auth
+      });
 
-  const handleAccept = (id: string) => {
-    setOfficials((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: "accepted" as const } : o))
-    );
-    onVerify([id]);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Filter only unverified officials
+        const pendingOfficials = data.data.filter((official: Official) => !official.isVerified);
+        setOfficials(pendingOfficials);
+      } else {
+        toast.error("Failed to fetch officials", {
+          description: data.message || "Unable to load pending requests",
+        });
+      }
+    } catch (error) {
+      console.error('Fetch officials error:', error);
+      toast.error("Failed to fetch officials", {
+        description: "Network error. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setOfficials((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: "rejected" as const } : o))
-    );
+  const handleAccept = async (id: number) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [id]: true }));
+
+      const response = await fetch(`${BASE_URL}/admin/officials/verify/${id}`, {
+        method: 'POST',
+        credentials: 'include', // Include cookies for auth
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove the verified official from the list
+        setOfficials(prev => prev.filter(official => official.id !== id));
+        toast.success("Official verified!", {
+          description: `${data.data.name} has been verified successfully`,
+        });
+      } else {
+        toast.error("Verification failed!", {
+          description: data.message || "Unable to verify official",
+        });
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error("Verification failed!", {
+        description: "Network error. Please try again.",
+      });
+    } finally {
+      setActionLoading(prev => ({ ...prev, [id]: false }));
+    }
   };
 
-  const pendingOfficials = officials.filter((o) => o.status === "pending");
-  const acceptedOfficials = officials.filter((o) => o.status === "accepted");
-  const rejectedOfficials = officials.filter((o) => o.status === "rejected");
+  const handleReject = async (id: number) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [id]: true }));
+
+      const response = await fetch(`${BASE_URL}/admin/officials/decline/${id}`, {
+        method: 'POST',
+        credentials: 'include', // Include cookies for auth
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove the rejected official from the list
+        setOfficials(prev => prev.filter(official => official.id !== id));
+        toast.success("Official declined!", {
+          description: `${data.data.name} has been removed from the system`,
+        });
+      } else {
+        toast.error("Decline failed!", {
+          description: data.message || "Unable to decline official",
+        });
+      }
+    } catch (error) {
+      console.error('Decline error:', error);
+      toast.error("Decline failed!", {
+        description: "Network error. Please try again.",
+      });
+    } finally {
+      setActionLoading(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   return (
     <div className="animate-slide-up">
@@ -79,64 +129,87 @@ const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
           <CheckCircle className="w-6 h-6 text-primary-foreground" />
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Verify Officials</h2>
-          <p className="text-muted-foreground text-sm">Review and approve pending requests</p>
+          <h2 className="text-2xl font-semibold text-foreground">Official Verification</h2>
+          <p className="text-muted-foreground text-sm">Review and manage official applications</p>
         </div>
       </div>
 
-      {pendingOfficials.length > 0 && (
+      {loading ? (
+        <div className="text-center py-16">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6 border border-primary/10">
+            <Loader2 className="w-10 h-10 text-primary/60 animate-spin" />
+          </div>
+          <h3 className="text-xl font-semibold text-foreground mb-3">Loading Officials</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
+            Fetching pending verification requests...
+          </p>
+        </div>
+      ) : officials.length > 0 ? (
         <div className="space-y-4 mb-6">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Pending Requests ({pendingOfficials.length})
-          </h3>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+            <h3 className="text-lg font-medium text-foreground">
+              Pending Review ({officials.length})
+            </h3>
+          </div>
           <div className="space-y-3">
-            {pendingOfficials.map((official) => (
+            {officials.map((official) => (
               <div
                 key={official.id}
                 className="p-4 rounded-xl border border-border bg-card hover:shadow-card transition-all duration-200"
               >
-                <div className="flex items-start gap-4">
-                  <Avatar className="w-14 h-14 border-2 border-border">
-                    <AvatarImage src={official.image} alt={official.name} />
+                <div className="flex flex-col sm:flex-row items-start gap-4">
+                  <Avatar className="w-14 h-14 border-2 border-border flex-shrink-0">
+                    <AvatarImage src={official.photo} alt={official.name} />
                     <AvatarFallback className="bg-muted text-muted-foreground text-lg">
                       {official.name.split(" ").map((n) => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-foreground">{official.name}</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-2 mt-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        {official.email}
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{official.email}</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
-                        {official.department}
+                        <Building2 className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{official.department}</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        <Briefcase className="w-4 h-4" />
-                        {official.position}
+                        <Briefcase className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{official.position}</span>
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-4 sm:mt-0">
                     <Button
                       onClick={() => handleAccept(official.id)}
                       variant="success"
                       size="sm"
-                      className="gap-1"
+                      className="gap-1 flex-1 sm:flex-none"
+                      disabled={actionLoading[official.id]}
                     >
-                      <CheckCircle className="w-4 h-4" />
-                      Accept
+                      {actionLoading[official.id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4" />
+                      )}
+                      {actionLoading[official.id] ? "Verifying..." : "Accept"}
                     </Button>
                     <Button
                       onClick={() => handleReject(official.id)}
                       variant="destructive"
                       size="sm"
-                      className="gap-1"
+                      className="gap-1 flex-1 sm:flex-none"
+                      disabled={actionLoading[official.id]}
                     >
-                      <X className="w-4 h-4" />
-                      Reject
+                      {actionLoading[official.id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                      {actionLoading[official.id] ? "Declining..." : "Reject"}
                     </Button>
                   </div>
                 </div>
@@ -144,79 +217,15 @@ const VerifyOfficials = ({ onVerify }: VerifyOfficialsProps) => {
             ))}
           </div>
         </div>
-      )}
-
-      {acceptedOfficials.length > 0 && (
-        <div className="space-y-4 mb-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Accepted</h3>
-          <div className="space-y-3">
-            {acceptedOfficials.map((official) => (
-              <div
-                key={official.id}
-                className="p-4 rounded-xl border border-success/20 bg-success/5"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-1 rounded-full bg-success/10">
-                    <CheckCircle className="w-5 h-5 text-success" />
-                  </div>
-                  <Avatar className="w-10 h-10 border-2 border-success/20">
-                    <AvatarImage src={official.image} alt={official.name} />
-                    <AvatarFallback className="bg-success/10 text-success">
-                      {official.name.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-foreground">{official.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {official.position} • {official.department}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+      ) : (
+        <div className="text-center py-16">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6 border border-primary/10">
+            <CheckCircle className="w-10 h-10 text-primary/60" />
           </div>
-        </div>
-      )}
-
-      {rejectedOfficials.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Rejected</h3>
-          <div className="space-y-3">
-            {rejectedOfficials.map((official) => (
-              <div
-                key={official.id}
-                className="p-4 rounded-xl border border-destructive/20 bg-destructive/5"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-1 rounded-full bg-destructive/10">
-                    <X className="w-5 h-5 text-destructive" />
-                  </div>
-                  <Avatar className="w-10 h-10 border-2 border-destructive/20">
-                    <AvatarImage src={official.image} alt={official.name} />
-                    <AvatarFallback className="bg-destructive/10 text-destructive">
-                      {official.name.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-foreground">{official.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {official.position} • {official.department}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {pendingOfficials.length === 0 && acceptedOfficials.length === 0 && rejectedOfficials.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">No Pending Requests</h3>
-          <p className="text-muted-foreground">All officials have been reviewed</p>
+          <h3 className="text-xl font-semibold text-foreground mb-3">All Clear</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
+            No pending verification requests at this time. New requests will appear here when officials submit their applications.
+          </p>
         </div>
       )}
     </div>

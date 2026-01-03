@@ -7,6 +7,7 @@ import { UserPlus, User, Mail, Building2, Briefcase, Upload, X } from "lucide-re
 interface AdminData {
   name: string;
   email: string;
+  password: string;
   image: File | null;
   department: string;
   position: string;
@@ -20,6 +21,7 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
   const [formData, setFormData] = useState<AdminData>({
     name: "",
     email: "",
+    password: "default123", // Default password for new admins
     image: null,
     department: "",
     position: "",
@@ -140,13 +142,34 @@ const RegisterAdmin = ({ onRegister }: RegisterAdminProps) => {
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               id="reg-email"
-              type="email"
+              type="text"
               placeholder="john@company.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="pl-11 h-12 bg-muted/50 border-border focus:border-primary"
               required
             />
+          </div>
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-medium text-foreground">
+            Default Password
+          </Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type="text"
+              placeholder="default123"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="h-12 bg-muted/50 border-border focus:border-primary"
+              required
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              Default: default123
+            </span>
           </div>
         </div>
 
