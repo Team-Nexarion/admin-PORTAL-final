@@ -65,10 +65,7 @@ const Login = () => {
           <AdminLogin onLogin={handleLogin} />
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-muted-foreground mt-6 animate-fade-in" style={{ animationDelay: "300ms" }}>
-          Protected by enterprise-grade security
-        </p>
+        
       </div>
     </div>
   );
