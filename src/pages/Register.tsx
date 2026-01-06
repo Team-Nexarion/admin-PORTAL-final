@@ -31,7 +31,7 @@ const Register = () => {
         formData.append('photo', data.image);
       }
 
-      const response = await fetch('https://glacier-backend-4r0g.onrender.com/admin/register', {
+      const response = await fetch('https://glacier-backend-1.onrender.com/admin/register', {
         method: 'POST',
         credentials: 'include', // Include cookies for auth
         body: formData,
@@ -69,7 +69,7 @@ const Register = () => {
 
   const handlePasswordUpdate = async (oldPassword: string, newPassword: string) => {
     try {
-      const response = await fetch('https://glacier-backend-4r0g.onrender.com/admin/updatepassword', {
+      const response = await fetch('https://glacier-backend-1.onrender.com/admin/updatepassword', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const Register = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('https://glacier-backend-4r0g.onrender.com/admin/signout', {
+      const response = await fetch('https://glacier-backend-1.onrender.com/admin/signout', {
         method: 'POST',
         credentials: 'include', // Include cookies for auth
       });

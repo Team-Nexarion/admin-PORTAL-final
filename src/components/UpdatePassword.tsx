@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Key } from "lucide-react";
 import { toast } from "sonner";
 
-const BASE_URL = "https://glacier-backend-4r0g.onrender.com";
+const BASE_URL = "https://glacier-backend-1.onrender.com";
 
 const UpdatePassword = () => {
   const [formData, setFormData] = useState({

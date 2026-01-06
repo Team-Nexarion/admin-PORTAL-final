@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, User, Mail, Building2, Briefcase, Upload, X } from "lucide-react";
 
-const BASE_URL = "https://glacier-backend-4r0g.onrender.com";
+const BASE_URL = "https://glacier-backend-1.onrender.com";
 
 interface AdminData {
   name: string;

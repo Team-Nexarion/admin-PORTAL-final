@@ -4,7 +4,7 @@ import { CheckCircle, X, User, Mail, Building2, Briefcase, Loader2 } from "lucid
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
-const BASE_URL = "https://glacier-backend-4r0g.onrender.com";
+const BASE_URL = "https://glacier-backend-1.onrender.com";
 
 interface Official {
   id: number;
