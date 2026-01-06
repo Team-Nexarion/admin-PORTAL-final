@@ -85,7 +85,7 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         </div>
 
         <Button type="submit" variant="gradient" className="w-full" size="lg">
-          Sign In
+          Log in
         </Button>
       </form>
     </div>
